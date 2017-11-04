@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Form from 'react-jsonschema-form';
+import { Map } from 'immutable';
 
 import USWDSRadioWidget from 'components/uswds_radio_widget';
 import USWDSCheckboxWidget from 'components/uswds_checkbox_widget';
@@ -10,9 +11,10 @@ import ObjectFieldTemplate from './object_field_template';
 import rf from '../util/request_form';
 import FoiaFileWidget from './foia_file_widget';
 import { dataUrlToAttachment, findFileFields } from '../util/attachment';
+import UploadProgress from './upload_progress';
 
 
-function FoiaRequestForm({ formData, isSubmitting, onSubmit, requestForm, submissionResult }) {
+function FoiaRequestForm({ formData, upload, onSubmit, requestForm, submissionResult }) {
   function onChange({ formData: data }) {
     requestActions.updateRequestForm(data);
   }
@@ -58,7 +60,7 @@ function FoiaRequestForm({ formData, isSubmitting, onSubmit, requestForm, submis
   return (
     <Form
       className="foia-request-form"
-      disabled={isSubmitting}
+      disabled={upload.get('inProgress')}
       formContext={formContext}
       formData={formData.toJS()}
       ObjectFieldTemplate={ObjectFieldTemplate}
@@ -75,7 +77,13 @@ function FoiaRequestForm({ formData, isSubmitting, onSubmit, requestForm, submis
           within 10 days. If you don’t hear from the agency, please reach out
           using the contact information provided to you on this site.
         </p>
-        <button type="submit" disabled={isSubmitting}>Submit</button>
+        <button type="submit" disabled={upload.get('inProgress')}>Submit</button>
+        { upload.get('inProgress') &&
+          <UploadProgress
+            progressTotal={upload.get('progressTotal')}
+            progressLoaded={upload.get('progressLoaded')}
+          />
+        }
         { submissionResult.errorMessage &&
           <p>
             <span className="usa-input-error-message" role="alert">
@@ -90,7 +98,7 @@ function FoiaRequestForm({ formData, isSubmitting, onSubmit, requestForm, submis
 
 FoiaRequestForm.propTypes = {
   formData: PropTypes.object.isRequired,
-  isSubmitting: PropTypes.bool.isRequired,
+  upload: PropTypes.instanceOf(Map).isRequired,
   onSubmit: PropTypes.func,
   requestForm: PropTypes.object.isRequired,
   submissionResult: PropTypes.instanceOf(SubmissionResult).isRequired,
